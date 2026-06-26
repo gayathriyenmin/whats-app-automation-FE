@@ -82,6 +82,7 @@ const AutomationBuilder: React.FC = () => {
   const [playgroundLogs, setPlaygroundLogs] = useState<{ text: string; type: string }[]>([]);
   const [chatMessages, setChatMessages] = useState<{ sender: 'user' | 'ai'; text: string }[]>([]);
   const [isSimulating, setIsSimulating] = useState(false);
+  const [isPdfUploading, setIsPdfUploading] = useState(false);
 
   // Drag and drop sorting states
   const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null);
@@ -174,6 +175,43 @@ const AutomationBuilder: React.FC = () => {
       isActive: true
     });
     setNewKb({ question: '', answer: '', tags: '', isActive: true });
+  };
+
+  const handlePdfUpload = async (file: File) => {
+    if (!file) return;
+    setIsPdfUploading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const res = await api.post('/settings/kb/upload-pdf', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      alert(`Successfully uploaded PDF. Extracted and saved ${res.data.savedCount} knowledge articles.`);
+      fetchKb();
+    } catch (err: any) {
+      alert(`Failed to parse PDF: ${err.response?.data?.message || err.message}`);
+    } finally {
+      setIsPdfUploading(false);
+    }
+  };
+
+  const handlePdfFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handlePdfUpload(file);
+    }
+  };
+
+  const handlePdfDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type === 'application/pdf') {
+      handlePdfUpload(file);
+    } else {
+      alert('Only PDF files are supported.');
+    }
   };
 
   // Personality Actions
@@ -1030,11 +1068,34 @@ const AutomationBuilder: React.FC = () => {
           {/* I. KNOWLEDGE SOURCES PROPERTIES */}
           {activeTab === 'knowledge-sources' && (
             <div>
-              <div className={styles.uploadZone}>
-                <Upload size={24} color="var(--primary)" />
-                <h5 style={{ fontSize: '0.82rem', fontWeight: 600 }}>Drag & drop Knowledge Vector PDF</h5>
-                <span>Accepts documents up to 10MB</span>
+              <div
+                className={`${styles.uploadZone} ${isPdfUploading ? styles.uploading : ''}`}
+                onClick={() => !isPdfUploading && document.getElementById('pdf-upload-input')?.click()}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={handlePdfDrop}
+                style={{ cursor: isPdfUploading ? 'not-allowed' : 'pointer' }}
+              >
+                {isPdfUploading ? (
+                  <>
+                    <div className={styles.spinner} style={{ margin: '8px auto', border: '3px solid rgba(0,0,0,0.1)', borderTop: '3px solid var(--primary)', borderRadius: '50%', width: '24px', height: '24px', animation: 'spin 1s linear infinite' }} />
+                    <h5 style={{ fontSize: '0.82rem', fontWeight: 600 }}>Extracting knowledge...</h5>
+                    <span>This can take a few seconds</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload size={24} color="var(--primary)" />
+                    <h5 style={{ fontSize: '0.82rem', fontWeight: 600 }}>Drag & drop or Click to upload PDF</h5>
+                    <span>Accepts documents up to 10MB</span>
+                  </>
+                )}
               </div>
+              <input
+                type="file"
+                id="pdf-upload-input"
+                accept=".pdf"
+                style={{ display: 'none' }}
+                onChange={handlePdfFileChange}
+              />
 
               <form onSubmit={handleAddKb} style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '24px' }}>
                 <div className={styles.formGroup} style={{ marginBottom: '8px' }}>
