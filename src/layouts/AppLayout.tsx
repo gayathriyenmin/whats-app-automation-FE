@@ -18,6 +18,10 @@ import {
   Moon,
   Sun,
   LogOut,
+  LayoutDashboard,
+  Calendar,
+  Activity,
+  ClipboardCheck,
 } from 'lucide-react';
 
 interface AppLayoutProps {
@@ -51,8 +55,12 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   // Map route path to header title
   const getPageTitle = () => {
     const path = location.pathname;
-    if (path === '/' || path === '/automations') return 'AI Workflow Builder';
+    if (path === '/' || path === '/dashboard') return 'System Dashboard';
+    if (path === '/automations') return 'AI Workflow Builder';
     if (path === '/whatsapp-accounts') return 'WhatsApp Accounts Gateway';
+    if (path === '/approval-queue') return 'Human Approval Queue';
+    if (path === '/scheduler') return 'Outbound Messages Scheduler';
+    if (path === '/monitoring') return 'System Activity Monitoring & Reports';
     if (path === '/business-assistant') return 'Business AI Assistant Config';
     if (path === '/group-assistant') return 'Group Community Rules';
     if (path === '/humanizer') return 'Tone Humanization Pipeline';
@@ -78,14 +86,36 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         </div>
 
         <nav className={styles.navSection}>
+          <NavLink to="/dashboard" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`} onClick={() => setSidebarOpen(false)}>
+            <LayoutDashboard size={18} />
+            <span>Dashboard</span>
+          </NavLink>
+
           <NavLink to="/whatsapp-accounts" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`} onClick={() => setSidebarOpen(false)}>
             <Zap size={18} />
             <span>WhatsApp Accounts</span>
           </NavLink>
 
+          <NavLink to="/approval-queue" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`} onClick={() => setSidebarOpen(false)}>
+            <ClipboardCheck size={18} />
+            <span>Approval Queue</span>
+          </NavLink>
+
+          <NavLink to="/scheduler" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`} onClick={() => setSidebarOpen(false)}>
+            <Calendar size={18} />
+            <span>Scheduler</span>
+          </NavLink>
+
+          <NavLink to="/monitoring" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`} onClick={() => setSidebarOpen(false)}>
+            <Activity size={18} />
+            <span>Monitoring & Reports</span>
+          </NavLink>
+
+          <div style={{ height: '1px', background: 'var(--border-color)', margin: '10px 0' }} />
+
           <NavLink to="/automations" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`} onClick={() => setSidebarOpen(false)}>
             <Compass size={18} />
-            <span>Automations</span>
+            <span>Automations Builder</span>
           </NavLink>
 
           <NavLink to="/business-assistant" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`} onClick={() => setSidebarOpen(false)}>

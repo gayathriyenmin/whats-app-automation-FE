@@ -44,8 +44,12 @@ function App() {
 
         {/* Protected visual builder workspace routes */}
         <Route path="/" element={<ProtectedRoute><AutomationBuilder /></ProtectedRoute>} />
+        <Route path="/dashboard" element={<ProtectedRoute><AutomationBuilder /></ProtectedRoute>} />
         <Route path="/automations" element={<ProtectedRoute><AutomationBuilder /></ProtectedRoute>} />
         <Route path="/whatsapp-accounts" element={<ProtectedRoute><AutomationBuilder /></ProtectedRoute>} />
+        <Route path="/approval-queue" element={<ProtectedRoute><AutomationBuilder /></ProtectedRoute>} />
+        <Route path="/scheduler" element={<ProtectedRoute><AutomationBuilder /></ProtectedRoute>} />
+        <Route path="/monitoring" element={<ProtectedRoute><AutomationBuilder /></ProtectedRoute>} />
         <Route path="/business-assistant" element={<ProtectedRoute><AutomationBuilder /></ProtectedRoute>} />
         <Route path="/group-assistant" element={<ProtectedRoute><AutomationBuilder /></ProtectedRoute>} />
         <Route path="/humanizer" element={<ProtectedRoute><AutomationBuilder /></ProtectedRoute>} />

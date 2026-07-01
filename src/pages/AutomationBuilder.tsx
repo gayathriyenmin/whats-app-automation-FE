@@ -11,7 +11,6 @@ import {
   Shield,
   Smile,
   Clock,
-  Keyboard,
   Send,
   Play,
   Plus,
@@ -22,14 +21,24 @@ import {
   AlertTriangle,
   GripVertical,
   Settings as SettingsIcon,
+  Activity,
+  ClipboardCheck,
+  BookOpen,
 } from 'lucide-react';
+import {
+  DashboardView,
+  MultiAccountView,
+  ApprovalQueueView,
+  SchedulerView,
+  MonitoringView,
+} from '../components/NewFeatures';
 
 interface VisualNode {
   id: string;
   name: string;
   desc: string;
   icon: any;
-  type: 'trigger' | 'logical' | 'ai' | 'check' | 'format' | 'queue' | 'delay' | 'output';
+  type: string;
   enabled: boolean;
   tabKey: string;
 }
@@ -55,18 +64,23 @@ const AutomationBuilder: React.FC = () => {
   const navigate = useNavigate();
 
   // Selected tab based on route URL pathname
-  const activeTab = location.pathname.substring(1) || 'automations';
+  const activeTab = location.pathname.substring(1) || 'dashboard';
 
-  // Local UI State
+  const isFullPageView = ['dashboard', 'whatsapp-accounts', 'approval-queue', 'scheduler', 'monitoring'].includes(activeTab);
+
+  // Local UI State updated with new builder requirements
   const [nodes, setNodes] = useState<VisualNode[]>([
     { id: 'trigger', name: 'WhatsApp Trigger', desc: 'Fires on incoming webhook message events.', icon: Zap, type: 'trigger', enabled: true, tabKey: 'whatsapp-accounts' },
-    { id: 'intent', name: 'Intent Detection', desc: 'Routes customer inquiries and filters group admin activity.', icon: Compass, type: 'logical', enabled: true, tabKey: 'group-assistant' },
-    { id: 'ai', name: 'Conversation AI', desc: 'Generates responses using Knowledge RAG and personalities.', icon: Brain, type: 'ai', enabled: true, tabKey: 'business-assistant' },
-    { id: 'compliance', name: 'Compliance Engine', desc: 'Scans drafts for spam, profit guarantees, and adult content.', icon: Shield, type: 'check', enabled: true, tabKey: 'compliance' },
-    { id: 'humanizer', name: 'Humanizer Engine', desc: 'Applies tone, emoji density, and bubble sentence-splits.', icon: Smile, type: 'format', enabled: true, tabKey: 'humanizer' },
-    { id: 'delay', name: 'Delay Engine', desc: 'Computes pauses based on query complexity.', icon: Clock, type: 'queue', enabled: true, tabKey: 'delay-settings' },
-    { id: 'typing', name: 'Typing Simulation', desc: 'Triggers visual typing indicators before outbound dispatch.', icon: Keyboard, type: 'delay', enabled: true, tabKey: 'delay-settings' },
-    { id: 'sender', name: 'WhatsApp Sender', desc: 'Dispatches finalized message packets back to users.', icon: Send, type: 'output', enabled: true, tabKey: 'whatsapp-accounts' },
+    { id: 'condition', name: 'Condition Node', desc: 'Evaluates escalation keywords and message types.', icon: Compass, type: 'logical', enabled: true, tabKey: 'group-assistant' },
+    { id: 'business_hours', name: 'Business Hours', desc: 'Checks hours of operation and triggers autoreplies.', icon: Clock, type: 'check', enabled: true, tabKey: 'whatsapp-accounts' },
+    { id: 'kb', name: 'Knowledge Base RAG', desc: 'Matches queries against uploaded PDFs and knowledge items.', icon: BookOpen, type: 'ai', enabled: true, tabKey: 'knowledge-sources' },
+    { id: 'ai_personality', name: 'AI Personality', desc: 'Selects friendly, formal, or Hinglish styles.', icon: Smile, type: 'ai', enabled: true, tabKey: 'ai-personality' },
+    { id: 'ai_engine', name: 'AI Generation Engine', desc: 'Generates text response using Groq or OpenAI.', icon: Brain, type: 'ai', enabled: true, tabKey: 'business-assistant' },
+    { id: 'compliance', name: 'Compliance Screening', desc: 'Filters drafts for adult content, spam, or scams.', icon: Shield, type: 'check', enabled: true, tabKey: 'compliance' },
+    { id: 'approval', name: 'Human Approval Gate', desc: 'Optionally holds low-confidence drafts for approval.', icon: ClipboardCheck, type: 'check', enabled: true, tabKey: 'approval-queue' },
+    { id: 'delay', name: 'Smart Delay', desc: 'Inserts custom human pauses and typing simulation.', icon: Clock, type: 'delay', enabled: true, tabKey: 'delay-settings' },
+    { id: 'output', name: 'WhatsApp Output', desc: 'Dispatches finalized reply packet to user.', icon: Send, type: 'output', enabled: true, tabKey: 'whatsapp-accounts' },
+    { id: 'analytics', name: 'Analytics Logging', desc: 'Pushes success/failure metrics to monitoring logs.', icon: Activity, type: 'output', enabled: true, tabKey: 'monitoring' },
   ]);
 
   // Highlighted Node on Canvas
@@ -366,104 +380,115 @@ const AutomationBuilder: React.FC = () => {
     <div className={styles.builderContainer}>
       
       {/* 2. Middle Visual Workflow Canvas */}
-      <main className={styles.canvasArea}>
-        <div className={styles.canvasHeader}>
-          <div className={styles.canvasInfo}>
-            <h3>Visual Workflow Editor</h3>
-            <span>Rearrange and enable/disable modules. Click node to edit properties.</span>
+      {!isFullPageView ? (
+        <main className={styles.canvasArea}>
+          <div className={styles.canvasHeader}>
+            <div className={styles.canvasInfo}>
+              <h3>Visual Workflow Editor</h3>
+              <span>Rearrange and enable/disable modules. Click node to edit properties.</span>
+            </div>
+            <div className={styles.canvasActions}>
+              <button className={styles.btnAction} onClick={() => handleTabChange('playground')}>
+                <Play size={14} fill="var(--text-secondary)" />
+                <span>Run Pipeline Test</span>
+              </button>
+            </div>
           </div>
-          <div className={styles.canvasActions}>
-            <button className={styles.btnAction} onClick={() => handleTabChange('playground')}>
-              <Play size={14} fill="var(--text-secondary)" />
-              <span>Run Pipeline Test</span>
-            </button>
-          </div>
-        </div>
 
-        <div className={styles.flowList}>
-          {nodes.map((node, index) => {
-            const NodeIcon = node.icon;
-            const isSelected = selectedNodeId === node.id;
-            return (
-              <React.Fragment key={node.id}>
-                {index > 0 && (
+          <div className={styles.flowList}>
+            {nodes.map((node, index) => {
+              const NodeIcon = node.icon;
+              const isSelected = selectedNodeId === node.id;
+              return (
+                <React.Fragment key={node.id}>
+                  {index > 0 && (
+                    <div
+                      className={`${styles.connectorLine} ${
+                        !nodes[index - 1].enabled || !node.enabled ? styles.disabled : ''
+                      } ${isSimulating ? styles.activeFlow : ''}`}
+                    />
+                  )}
+
                   <div
-                    className={`${styles.connectorLine} ${
-                      !nodes[index - 1].enabled || !node.enabled ? styles.disabled : ''
-                    } ${isSimulating ? styles.activeFlow : ''}`}
-                  />
-                )}
-
-                <div
-                  className={`${styles.nodeCard} ${isSelected ? styles.selected : ''} ${
-                    !node.enabled ? styles.disabled : ''
-                  }`}
-                  onClick={() => handleTabChange(node.tabKey)}
-                  draggable={true}
-                  onDragStart={() => handleDragStart(node.id)}
-                  onDragOver={handleDragOver}
-                  onDrop={() => handleDrop(node.id)}
-                >
-                  <div className={styles.dragHandle}>
-                    <GripVertical size={16} />
-                  </div>
-
-                  <div className={`${styles.nodeIconWrapper} ${styles[node.type]}`}>
-                    <NodeIcon size={20} />
-                  </div>
-
-                  <div className={styles.nodeContent}>
-                    <div className={styles.nodeTitle}>
-                      <span>{node.name}</span>
-                      {!node.enabled && (
-                        <span style={{ fontSize: '0.65rem', background: 'var(--border-color)', color: 'var(--text-secondary)', padding: '2px 6px', borderRadius: '4px' }}>
-                          Disabled
-                        </span>
-                      )}
+                    className={`${styles.nodeCard} ${isSelected ? styles.selected : ''} ${
+                      !node.enabled ? styles.disabled : ''
+                    }`}
+                    onClick={() => handleTabChange(node.tabKey)}
+                    draggable={true}
+                    onDragStart={() => handleDragStart(node.id)}
+                    onDragOver={handleDragOver}
+                    onDrop={() => handleDrop(node.id)}
+                  >
+                    <div className={styles.dragHandle}>
+                      <GripVertical size={16} />
                     </div>
-                    <span className={styles.nodeDesc}>{node.desc}</span>
-                  </div>
 
-                  <div className={styles.nodeControls}>
-                    <button
-                      className={styles.nodeOrderBtn}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleMoveNode(index, 'up');
-                      }}
-                      disabled={index === 0}
-                    >
-                      <ChevronUp size={14} />
-                    </button>
-                    <button
-                      className={styles.nodeOrderBtn}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleMoveNode(index, 'down');
-                      }}
-                      disabled={index === nodes.length - 1}
-                    >
-                      <ChevronDown size={14} />
-                    </button>
+                    <div className={`${styles.nodeIconWrapper} ${styles[node.type] || styles.logical}`}>
+                      <NodeIcon size={20} />
+                    </div>
 
-                    <label className={styles.toggleSwitch} onClick={(e) => e.stopPropagation()}>
-                      <input
-                        type="checkbox"
-                        checked={node.enabled}
-                        onChange={(e) => handleToggleNode(node.id, e as any)}
-                      />
-                      <span className={styles.sliderRound} />
-                    </label>
+                    <div className={styles.nodeContent}>
+                      <div className={styles.nodeTitle}>
+                        <span>{node.name}</span>
+                        {!node.enabled && (
+                          <span style={{ fontSize: '0.65rem', background: 'var(--border-color)', color: 'var(--text-secondary)', padding: '2px 6px', borderRadius: '4px' }}>
+                            Disabled
+                          </span>
+                        )}
+                      </div>
+                      <span className={styles.nodeDesc}>{node.desc}</span>
+                    </div>
+
+                    <div className={styles.nodeControls}>
+                      <button
+                        className={styles.nodeOrderBtn}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleMoveNode(index, 'up');
+                        }}
+                        disabled={index === 0}
+                      >
+                        <ChevronUp size={14} />
+                      </button>
+                      <button
+                        className={styles.nodeOrderBtn}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleMoveNode(index, 'down');
+                        }}
+                        disabled={index === nodes.length - 1}
+                      >
+                        <ChevronDown size={14} />
+                      </button>
+
+                      <label className={styles.toggleSwitch} onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          checked={node.enabled}
+                          onChange={(e) => handleToggleNode(node.id, e as any)}
+                        />
+                        <span className={styles.sliderRound} />
+                      </label>
+                    </div>
                   </div>
-                </div>
-              </React.Fragment>
-            );
-          })}
-        </div>
-      </main>
+                </React.Fragment>
+              );
+            })}
+          </div>
+        </main>
+      ) : (
+        <main className={styles.canvasArea} style={{ flex: 1, padding: '24px', overflowY: 'auto' }}>
+          {activeTab === 'dashboard' && <DashboardView />}
+          {activeTab === 'whatsapp-accounts' && <MultiAccountView />}
+          {activeTab === 'approval-queue' && <ApprovalQueueView />}
+          {activeTab === 'scheduler' && <SchedulerView />}
+          {activeTab === 'monitoring' && <MonitoringView />}
+        </main>
+      )}
 
       {/* 3. Right Properties Panel */}
-      <section className={styles.propertiesPanel}>
+      {!isFullPageView && (
+        <section className={styles.propertiesPanel}>
         {/* Context panel header */}
         <div className={styles.panelHeader}>
           <div className={styles.panelIconWrapper}>
@@ -1224,6 +1249,7 @@ const AutomationBuilder: React.FC = () => {
 
         </div>
       </section>
+      )}
 
     </div>
   );
